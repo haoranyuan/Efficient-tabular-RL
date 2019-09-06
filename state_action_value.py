@@ -29,6 +29,8 @@ class StateActionValue:
         self.sav_count[tuple(index)] += 1
         #print(index,self.sym_idx(index))
 
+    def set_sav(self, sav_new):
+        self.sav = sav_new.copy()
 
     def get_sav(self,):
         return self.sav

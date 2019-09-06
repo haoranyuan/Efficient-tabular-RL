@@ -1,4 +1,5 @@
-import quad_env,gui,rl_3d_agent,state_action_value
+import quad_env,gui,state_action_value
+from ellig_trace_RL import elligibility_trace as ctrl
 from tqdm import tqdm
 import numpy as np
 from numpy.random import uniform
@@ -48,8 +49,8 @@ def RL_Multi(QUAD_DYNAMICS_UPDATE=0.05,
     if validation:
         E = 1
     else:
-        E = 0.7
-    ctrl1 = rl_3d_agent.RL_3D(change_sav=sav.change_sav,
+        E = 0.9
+    ctrl1 = ctrl(set_sav=sav.set_sav,
                               get_sav=sav.get_sav,
                               lr=learningrate,
                               params=QUADCOPTER,
@@ -72,17 +73,23 @@ def RL_Multi(QUAD_DYNAMICS_UPDATE=0.05,
         success = 0
         done = 0
         reward = 0
+        action_ = None
         for j in range(MAX_EP_STEP):
             # If not success but cross the boarder then reset
             if done and not success:
                 state = quad.reset_quads()
-            action = ctrl1.policy(state)
+            # On-policy learning:
+            if j == 0:
+                action = ctrl1.policy(state)
+            else:
+                action = action_
             state_, r, done, sc, statecont_, actioncont_ = quad.one_step(action=action,
                                             dt=QUAD_DYNAMICS_UPDATE)
+            action_ = ctrl1.policy(state_)
             ctrl1.store_trans(state, action, r, state_, statecont_, actioncont_)
             reward += r
             if not validation:
-                ctrl1.learn()
+                ctrl1.learn(action_)
             if render:
                 gui_object.quads['q1']['position'] = quad.get_position('q1')
                 gui_object.quads['q1']['orientation'] = quad.get_orientation('q1')
@@ -129,4 +136,4 @@ def RL_Multi(QUAD_DYNAMICS_UPDATE=0.05,
 
 
 if __name__ == "__main__":
-    RL_Multi(QUAD_DYNAMICS_UPDATE=0.2, render=False, reward_flag='default', verbose=False, validation=0, episode=10000)
+    RL_Multi(QUAD_DYNAMICS_UPDATE=0.2, render=False, reward_flag='default', verbose=False, validation=0, episode=3000)
