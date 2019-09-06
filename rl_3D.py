@@ -49,7 +49,7 @@ def RL_Multi(QUAD_DYNAMICS_UPDATE=0.05,
     if validation:
         E = 1
     else:
-        E = 0.9
+        E = 0.7
     ctrl1 = ctrl(set_sav=sav.set_sav,
                               get_sav=sav.get_sav,
                               lr=learningrate,
@@ -61,6 +61,7 @@ def RL_Multi(QUAD_DYNAMICS_UPDATE=0.05,
      # episodes
     success_rate = []
     reward_log = []
+    success_log = []
     if isfile('sc_scatter_'+reward_flag+'val'+str(validation)+'.csv'):
         success_rate = list(np.genfromtxt('sc_scatter_'+reward_flag+'val'+str(validation)+'.csv', delimiter=','))
         print('load success rate data')
@@ -85,6 +86,7 @@ def RL_Multi(QUAD_DYNAMICS_UPDATE=0.05,
                 action = action_
             state_, r, done, sc, statecont_, actioncont_ = quad.one_step(action=action,
                                             dt=QUAD_DYNAMICS_UPDATE)
+            success_log.append(sc)
             action_ = ctrl1.policy(state_)
             ctrl1.store_trans(state, action, r, state_, statecont_, actioncont_)
             reward += r
@@ -99,16 +101,15 @@ def RL_Multi(QUAD_DYNAMICS_UPDATE=0.05,
 
             # Keep the previous state at the boarder if reset
             state = state_
-        if sum(np.prod((ctrl1.ep_s_[-10:] == target_state), axis=1)) > 3:
+        ''''''
+        if sum(np.array(success_log[-10:]) == 1) > 3:
             success = 1
+
         success_rate.append(np.array([success, reward]))
         if verbose:
-            if i % 10 == 0:
-                print('episode={0:5d}, r_total={1:8.2f}, r_average={2:8.2f}, success rate: {3:1.3f}, '
-                      'norm(old_sav-new_sav)={4:2.4f}'
-                      .format(i, np.sum(ctrl1.ep_r), np.sum(ctrl1.ep_r) / len(ctrl1.ep_r),
-                       success_rate[-1], np.linalg.norm(sav_old - sav.get_sav())))
-                sav_old = np.copy(sav.get_sav())
+            if i % 200 == 0:
+                print('episode={0:5d}, r_total={1:8.2f}'
+                      .format(i, np.sum(ctrl1.ep_r)))
         if validation:
             try:
                 agentdata = np.concatenate((agentdata, np.hstack((ctrl1.statecont_log, ctrl1.actioncont_log))), axis=0)
@@ -120,6 +121,7 @@ def RL_Multi(QUAD_DYNAMICS_UPDATE=0.05,
         ctrl1.ep_s = []
         ctrl1.statecont_log = []
         ctrl1.actioncont_log = []
+        success_log = []
     if not validation:
         sav.save_file()
     # Save continuous state log
@@ -136,4 +138,4 @@ def RL_Multi(QUAD_DYNAMICS_UPDATE=0.05,
 
 
 if __name__ == "__main__":
-    RL_Multi(QUAD_DYNAMICS_UPDATE=0.2, render=False, reward_flag='default', verbose=False, validation=0, episode=3000)
+    RL_Multi(QUAD_DYNAMICS_UPDATE=0.2, render=False, reward_flag='default', verbose=True, validation=0, episode=2000)

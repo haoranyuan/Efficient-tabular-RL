@@ -28,7 +28,7 @@ class errorlog():
 class elligibility_trace():
 
     def __init__(self, set_sav, get_sav, params,
-                 lr=0.005, epsilon=0.8, gamma=0.9999, eli_decay = 0.9000):
+                 lr=0.02, epsilon=0.7, gamma=0.8000, eli_decay=0.8000):
 
         self.thread_object = None
         self.log = np.zeros([1,8])
@@ -62,9 +62,9 @@ class elligibility_trace():
         q_predict = sav[sa]
         s_a_ = tuple(np.concatenate((s_, a_)))
         update_target = r + self.gamma * sav[s_a_]
-        self.elligibility_trace[s] *= 0
+        self.elligibility_trace[tuple(s)] *= 0
         self.elligibility_trace[sa] = 1
-        sav *= self.lr * (update_target - q_predict) * self.elligibility_trace
+        sav += self.lr * (update_target - q_predict) * self.elligibility_trace
         self.set_sav(sav_new=sav)
         self.elligibility_trace *= self.eli_decay
 

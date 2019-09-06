@@ -181,7 +181,7 @@ class Quadcopter():
         done, success = False, False
         if self.get_state('q1')[2] < self.range['linear_z'][0] or self.get_state('q1')[2] > self.range['linear_z'][1]:
             done = True
-        if all(s_ == self.target_state):
+        if self.range['linear_z'][0] * 0.1 < self.get_state('q1')[2] < self.range['linear_z'][1] * 0.1:
             success = True
         return r, done, success
 
